@@ -21,9 +21,7 @@ function DriverRow({ driver, onDelete }: DriverRowProps) {
   };
 
   const handleYesClick = () => {
-    if (driver.id === undefined) {
-      onDelete(0);
-    } else {
+    if (driver.id !== undefined) {
       onDelete(driver.id);
     }
   };

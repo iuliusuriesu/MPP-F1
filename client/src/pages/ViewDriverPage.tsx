@@ -1,18 +1,34 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Driver, defaultDriver } from "../utils/Driver";
+import { defaultDriver } from "../utils/Driver";
 
-interface ViewDriverPageProps {
-  driverList: Driver[];
-}
+function ViewDriverPage() {
+  const [driver, setDriver] = useState(defaultDriver);
 
-function ViewDriverPage({ driverList }: ViewDriverPageProps) {
   const { id } = useParams();
   const driverId = id ? parseInt(id) : 0;
 
-  let driver = driverList.find((driver) => driver.id === driverId);
-  if (driver === undefined) {
-    driver = defaultDriver;
-  }
+  const fetchDriver = async () => {
+    await fetch(`http://localhost:8080/drivers/${driverId}`, {
+      method: "GET",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Response is not OK");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setDriver(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching driver on ViewDriverPage", error);
+      });
+  };
+
+  useEffect(() => {
+    fetchDriver();
+  }, []);
 
   return (
     <div className="text-center">

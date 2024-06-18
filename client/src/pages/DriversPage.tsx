@@ -1,17 +1,11 @@
 import { Link } from "react-router-dom";
 import DriversList from "../components/DriversList";
-import { Driver } from "../utils/Driver";
 
-interface DriversPageProps {
-  driverList: Driver[];
-  onDelete: (driverId: number) => void;
-}
-
-function DriversPage({ driverList, onDelete }: DriversPageProps) {
+function DriversPage() {
   return (
     <div className="p-3">
       <h1 className="h1 text-center">Driver List</h1>
-      <DriversList driverList={driverList} onDelete={onDelete} />
+      <DriversList />
       <Link to="/new-driver" className="btn btn-danger">
         New Driver
       </Link>
