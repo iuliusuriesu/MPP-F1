@@ -12,6 +12,9 @@ function NavigationBar() {
       <Link to="/new-driver" className="nav-link">
         New Driver
       </Link>
+      <Link to="/points-chart" className="nav-link">
+        Points Chart
+      </Link>
     </nav>
   );
 }

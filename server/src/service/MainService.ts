@@ -1,5 +1,6 @@
-import { DRIVERS, Driver, defaultDriver, setDrivers } from "../domain/Driver";
+import { Driver } from "../domain/Driver";
 import { DriverNotFoundError, InvalidDriverError } from "../utils/Errors";
+import { prisma } from "../utils/prisma";
 
 function validateDriver(driver: Driver) {
     // Name of the driver must start with a capital letter and must contain at least 3 characters
@@ -8,57 +9,95 @@ function validateDriver(driver: Driver) {
     }
 
     // Points must be at least 0 and no more than 1000
-    if (driver.points < 0 || driver.points > 1000) {
-        throw new InvalidDriverError('Driver must have between 0 and 1000 points!');
+    if (driver.points.toNumber() < 0 || driver.points.toNumber() >= 1000) {
+        throw new InvalidDriverError('Driver must have between 0 and 999 points!');
     }
 }
 
-export function getAllDrivers(): Driver[] {
-    return DRIVERS;
+export async function getAllDrivers() {
+    const drivers = await prisma.drivers.findMany();
+    return drivers;
 }
 
-export function getDriverById(driverId: number): Driver {
-    const driver = DRIVERS.find((driver) => driver.id === driverId);
-    if (driver === undefined) {
+export async function getDriverById(driverId: number) {
+    const driver = await prisma.drivers.findUnique({
+        where: {
+            id: driverId,
+        },
+    });
+
+    if (driver === null) {
         throw new DriverNotFoundError('Driver with id = ' + driverId + ' was not found!');
     }
-
     return driver;
 }
 
-export function addDriver(driver: Driver): Driver {
+export async function addDriver(driver: Driver) {
     validateDriver(driver);
 
-    const lastId = DRIVERS[DRIVERS.length - 1].id;
-    if (lastId === undefined) {
-        return defaultDriver;
-    }
-
-    driver.id = lastId + 1;
-    DRIVERS.push(driver);
-    return driver;
+    driver.id = undefined;
+    const addedDriver = await prisma.drivers.create({
+        data: driver,
+    });
+    return addedDriver;
 }
 
-export function deleteDriver(driverId: number): Driver {
-    const driver = DRIVERS.find((driver) => driver.id === driverId);
-    if (driver === undefined) {
+export async function deleteDriver(driverId: number) {
+    try {
+        const deletedDriver = await prisma.drivers.delete({
+            where: {
+                id: driverId,
+            },
+        });
+        return deletedDriver;
+    }
+    catch (err) {
+        //console.log(err);
         throw new DriverNotFoundError('Driver with id = ' + driverId + ' was not found!');
     }
-
-    const newDriverList = DRIVERS.filter((driver) => driver.id !== driverId);
-    setDrivers(newDriverList);
-    return driver;
 }
 
-export function updateDriver(driverId: number, newDriver: Driver): Driver {
-    const index = DRIVERS.findIndex((driver) => driver.id === driverId);
-    if (index === -1) {
-        throw new DriverNotFoundError('Driver with id = ' + driverId + ' was not found!');
-    }
-
+export async function updateDriver(driverId: number, newDriver: Driver) {
     validateDriver(newDriver);
 
-    newDriver.id = driverId;
-    DRIVERS[index] = newDriver;
-    return newDriver;
+    try {
+        newDriver.id = driverId;
+        const updatedDriver = await prisma.drivers.update({
+            where: {
+                id: driverId,
+            },
+            data: newDriver,
+        });
+        return updatedDriver;
+    }
+    catch (err) {
+        console.log(err);
+        throw new DriverNotFoundError('Driver with id = ' + driverId + ' was not found!');
+    }
+}
+
+export async function getPointsChartData() {
+    // answer[i] = how many drivers have points in the i-th hundred
+    const drivers = await prisma.drivers.findMany();
+
+    const answer: number[] = [];
+    for(let i = 0; i < 10; i++) {
+        answer.push(0);
+    }
+
+    for(let i = 0; i < drivers.length; i++) {
+        const points = drivers[i].points.toNumber();
+        const index = Math.floor(points / 100);
+        answer[index]++;
+    }
+
+    return answer;
+}
+
+export async function getDriverPage(pageNumber: number, pageSize: number) {
+    const drivers = await prisma.drivers.findMany({
+        skip: pageSize * (pageNumber - 1),
+        take: pageSize,
+    });
+    return drivers;
 }

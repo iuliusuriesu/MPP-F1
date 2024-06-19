@@ -5,6 +5,7 @@ import DriversPage from "../pages/DriversPage";
 import NewDriverPage from "../pages/NewDriverPage";
 import ViewDriverPage from "../pages/ViewDriverPage";
 import UpdateDriverPage from "../pages/UpdateDriverPage";
+import PointsChartPage from "../pages/PointsChartPage";
 
 function RoutingComponent() {
   return (
@@ -16,6 +17,7 @@ function RoutingComponent() {
           <Route path="/drivers/:id" element={<ViewDriverPage />} />
           <Route path="/new-driver" element={<NewDriverPage />} />
           <Route path="/drivers/update/:id" element={<UpdateDriverPage />} />
+          <Route path="/points-chart" element={<PointsChartPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

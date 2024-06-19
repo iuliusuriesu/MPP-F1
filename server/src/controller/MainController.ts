@@ -1,20 +1,21 @@
 import { Router } from "express";
-import { addDriver, deleteDriver, getAllDrivers, getDriverById, updateDriver } from "../service/MainService";
+import { addDriver, deleteDriver, getAllDrivers, getDriverById, getDriverPage, getPointsChartData, updateDriver } from "../service/MainService";
 import { Driver } from "../domain/Driver";
 import { DriverNotFoundError, InvalidDriverError } from "../utils/Errors";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export const mainRouter = Router();
 
-mainRouter.get('/drivers', (req, res) => {
-    const drivers = getAllDrivers();
+mainRouter.get('/drivers', async (req, res) => {
+    const drivers = await getAllDrivers();
     res.send(drivers);
 });
 
-mainRouter.get('/drivers/:id', (req, res) => {
+mainRouter.get('/drivers/:id', async (req, res) => {
     const id = parseInt(req.params.id);
 
     try {
-        const driver = getDriverById(id);
+        const driver = await getDriverById(id);
         res.send(driver);
     }
     catch (err) {
@@ -22,7 +23,7 @@ mainRouter.get('/drivers/:id', (req, res) => {
     }
 });
 
-mainRouter.post('/drivers', (req, res) => {
+mainRouter.post('/drivers', async (req, res) => {
 
     if (!req.body.name) {
         res.status(400).send('Name is required!');
@@ -42,11 +43,11 @@ mainRouter.post('/drivers', (req, res) => {
     const driver: Driver = {
         name: req.body.name,
         team: req.body.team,
-        points: parseFloat(req.body.points),
+        points: new Decimal(req.body.points),
     };
 
     try {
-        const addedDriver = addDriver(driver);
+        const addedDriver = await addDriver(driver);
         res.send(addedDriver);
     }
     catch (err) {
@@ -54,11 +55,11 @@ mainRouter.post('/drivers', (req, res) => {
     }
 });
 
-mainRouter.delete('/drivers/:id', (req, res) => {
+mainRouter.delete('/drivers/:id', async (req, res) => {
     const id = parseInt(req.params.id);
 
     try {
-        const driver = deleteDriver(id);
+        const driver = await deleteDriver(id);
         res.send(driver);
     }
     catch (err) {
@@ -66,17 +67,32 @@ mainRouter.delete('/drivers/:id', (req, res) => {
     }
 });
 
-mainRouter.put('/drivers/:id', (req, res) => {
+mainRouter.put('/drivers/:id', async (req, res) => {
+    if (!req.body.name) {
+        res.status(400).send('Name is required!');
+        return;
+    }
+
+    if (!req.body.team) {
+        res.status(400).send('Team is required!');
+        return;
+    }
+
+    if (!req.body.points) {
+        res.status(400).send('Points is required!');
+        return;
+    }
+
     const id = parseInt(req.params.id);
 
     const newDriver: Driver = {
         name: req.body.name,
         team: req.body.team,
-        points: parseFloat(req.body.points),
+        points: new Decimal(req.body.points),
     }
 
     try {
-        const driver = updateDriver(id, newDriver);
+        const driver = await updateDriver(id, newDriver);
         res.send(driver);
     }
     catch (err) {
@@ -87,4 +103,21 @@ mainRouter.put('/drivers/:id', (req, res) => {
             res.status(400).send((err as InvalidDriverError).message);
         }
     }
+});
+
+mainRouter.get('/points-chart-data', async (req, res) => {
+    const pointsChartData = await getPointsChartData();
+    res.send(pointsChartData);
+});
+
+mainRouter.get('/driver-page/:pageNumber', async (req, res) => {
+    const pageNumber = parseInt(req.params.pageNumber);
+    let pageSize = Number(req.query.pageSize);
+
+    if (isNaN(pageSize)) {
+        pageSize = 3;
+    }
+
+    const drivers = await getDriverPage(pageNumber, pageSize);
+    res.send(drivers);
 });
