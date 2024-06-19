@@ -1,6 +1,6 @@
 import { Driver } from "../domain/Driver";
 import { DriverNotFoundError, InvalidDriverError } from "../utils/Errors";
-import { prisma } from "../utils/prisma";
+import prisma from "../utils/prisma";
 
 function validateDriver(driver: Driver) {
     // Name of the driver must start with a capital letter and must contain at least 3 characters
